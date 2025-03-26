@@ -1,22 +1,19 @@
-# Use a lightweight Python image
-FROM python:3.9-slim
+# Use the official Python image
+FROM python:3.10-slim
 
-# Set the working directory
+# Set working directory
 WORKDIR /app
 
-# Copy application files
-COPY . /app
+# Copy files
+COPY . .
 
-# Install system dependencies required for LibreOffice and document processing
-RUN apt-get update && \
-    apt-get install -y libreoffice libgl1-mesa-glx libglib2.0-0 && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Install Python dependencies
+# Install dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Expose the Streamlit app port
-EXPOSE 8501
+# Streamlit runs on port 8501 by default; Cloud Run expects 8080
+# So we configure Streamlit to run on 0.0.0.0:8080
+ENV PORT 8080
+RUN echo "[server]\nport = 8080\nenableCORS = false\nheadless = true\n" > ~/.streamlit/config.toml
 
-# Set the Streamlit command to run the app
-CMD streamlit run app.py --server.port=$PORT --server.address=0.0.0.0
+# Run Streamlit app
+CMD ["streamlit", "run", "app.py"]
